@@ -10,44 +10,21 @@ app.use(express.static('public'));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// Display the task
-const taskDisplay = (res) => {
+// display tasks
+function taskDisplay(res) {
     const data = readFromDB();
     res.send(data);
-};
- 
- // Save the task
-const saveTask = (body, res) => {
+}
+
+// save tasks
+function taskSave(body, res) {
     const data = readFromDB();
     data.push(body);
     writeToDB(data, res);
-};
+}
 
-// Arrange an ID to the task
-function addId(data) {
-    let id = 1;
-    data.forEach(element => {
-        element["id"] = id++;
-    });
-    return data;
-};
- 
-// Read data from the database
-function readFromDB() {
-    let data = fs.readFileSync('./db/db.json', 'utf-8');
-    return data = JSON.parse(data);
-};
- 
-// Write data to the database
-function writeToDB(data, res) {
-    data = JSON.stringify(addId(data));
-    fs.writeFileSync("./db/db.json", data, function (err) {
-        (err ? res.send('Error! The note has not been saved properly') : res.send('Your note has been saved successfully')); // identify if the new data has been sucessfully write into the database
-    });
-};
-
-// Delete the task
-function removeTask(id, res) {
+// delete tasks
+function taskRemove(id, res) {
     const data = readFromDB();
     const newData = data.filter(function callback(item) {
         if (item.id != id) {
@@ -57,26 +34,60 @@ function removeTask(id, res) {
         }
     });
     writeToDB(newData, res);
-};
+}
+ 
+// read from the database
+function readFromDB() {
+    let data = fs.readFileSync('./db/db.json', 'utf-8');
+    return data = JSON.parse(data);
+}
+ 
+// write to the database
+function writeToDB(data, res) {
+    data = addId(data);
+    data = JSON.stringify(data);
+    fs.writeFile("./db/db.json", data, function (err) {
+        (err ? res.send('Error, the note is not properly saved!') : res.send('The note is saved successfully!'));
+    });
+}
+ 
+//Function used to add IDs to the tasks.
+function addId(data) {
+    let id = 1;
+    //console.log(data);
+    data.forEach(element => {
+        element["id"] = id++;
+    });
+    return data;
+}
 
-// create all the routes
-// visit the index page
-app.get('/*/', (req, res) => {
-    res.redirect('/index.html')
+// add all route callings
+
+// visit the landing page
+app.get("/notes", (req, res) => {
+    res.sendFile(path.join(__dirname, '/public/notes.html'))
+});
+
+// visit the notes
+app.route('/api/notes')
+.get((req, res) => {
+    taskDisplay(res)
 })
 
-// visit the notes page
-app.get("/notes", (req, res) => {
-    res.sendFile(path.join(__dirname, '/notes.html'))
-});
-
-app.delete('/api/notes/:id', (req, res) => {
-    removeTask(req.params.id, res)
-});
-
+// post the notes
 app.route('/api/notes')
-.get((req, res) => taskDisplay(res))
-.post((req, res) =>  saveTask(req.body, res));
+.post((req, res) =>{
+    taskSave(req.body, res)
+});
+
+// delete the notes
+app.delete('/api/notes/:id', (req, res) => {
+    taskRemove(req.params.id, res)
+});
+
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, './public/index.html'));
+});
 
 //listen to the port
 app.listen(PORT, () => {
