@@ -26,13 +26,13 @@ function taskSave(body, res) {
 // delete tasks
 function taskRemove(id, res) {
     const data = readFromDB();
-    const newData = data.filter(function callback(item) {
-        if (item.id != id) {
-            return true;
-        } else {
-            return false;
-        }
-    });
+    const newData = data.filter((item) => {
+            if (item.id != id) {
+                return true;
+            } else {
+                return false;
+            }
+        });
     writeToDB(newData, res);
 }
  
