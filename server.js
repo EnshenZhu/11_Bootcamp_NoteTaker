@@ -60,15 +60,14 @@ function removeTask(id, res) {
 };
 
 // create all the routes
-
 // visit the index page
 app.get('/*/', (req, res) => {
-    res.redirect('index.html')
+    res.redirect('/index.html')
 })
 
 // visit the notes page
 app.get("/notes", (req, res) => {
-    res.sendFile(path.join(__dirname, '/public/notes.html'))
+    res.sendFile(path.join(__dirname, '/notes.html'))
 });
 
 app.delete('/api/notes/:id', (req, res) => {
@@ -76,12 +75,8 @@ app.delete('/api/notes/:id', (req, res) => {
 });
 
 app.route('/api/notes')
-.get((req, res) => {
-    taskDisplay(res)
-})
-.post((req, res) => {
-    saveTask(req.body, res)
-});
+.get((req, res) => taskDisplay(res))
+.post((req, res) =>  saveTask(req.body, res));
 
 //listen to the port
 app.listen(PORT, () => {
