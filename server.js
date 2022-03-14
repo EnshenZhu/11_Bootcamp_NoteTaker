@@ -10,73 +10,76 @@ app.use(express.static('public'));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-//Function used to show the saved tasks.
-const showTasks = (res) => {
-    const data = readFromFile();
-     res.send(data);
+// Display the task
+const taskDisplay = (res) => {
+    const data = readFromDB();
+    res.send(data);
  }
  
- //Function used to save a task.
- const saveTask = (body, res) => {
-    const data = readFromFile();
+ // Save the task
+const saveTask = (body, res) => {
+    const data = readFromDB();
     data.push(body);
-    writeToFile(data, res);
- }
+    writeToDB(data, res);
+}
+
  
- //Function used to remove a task.
- const removeTask = (id, res) => {
-     const data = readFromFile();
-     const newData = data.filter(function callback(item){
-         if(item.id != id){
-             return true
-         } else {
-             return false
-         }
-     });
-     writeToFile(newData, res);
- }
+// Read data from the database
+function readFromDB() {
+    let data = fs.readFileSync('./db/db.json', 'utf-8');
+    return data = JSON.parse(data);
+}
  
- //Function used to get the saved tasks from the "database".
- const readFromFile = () => {
-     let data = fs.readFileSync('./db/db.json', 'utf-8');
-     return data = JSON.parse(data);
- }
+ // Write data to the database
+function writeToDB(data, res) {
+    data = JSON.stringify(addId(data));
+    fs.writeFile("./db/db.json", data, function (err) {
+        (err ? res.send('Something went wrong!') : res.send('Task was successfully saved!'));
+    });
+}
+
+// Delete the task
+function removeTask(id, res) {
+    const data = readFromDB();
+    const newData = data.filter(function callback(item) {
+        if (item.id != id) {
+            return true;
+        } else {
+            return false;
+        }
+    });
+    writeToDB(newData, res);
+}
  
- //Function to save the list of tasks to the "database".
- const writeToFile = (data, res) => {
-     //data.push(body);
-     data = addId(data);
-     data = JSON.stringify(data);
-     fs.writeFile("./db/db.json", data, function (err) {
-         (err ? res.send('Something went wrong!') : res.send('Task was successfully saved!'));
-     });
- }
- 
- //Function used to add IDs to the tasks.
- const addId = (data) => {
-     var id = 1;
-     //console.log(data);
-     data.forEach(element => {
-         element["id"] = id++;
-     });
-     return data;
- }
+//Function used to add IDs to the tasks.
+function addId(data) {
+    var id = 1;
+    //console.log(data);
+    data.forEach(element => {
+        element["id"] = id++;
+    });
+    return data;
+}
+
+app.get('/*/', (req, res) => {
+    res.redirect('/index.html')
+})
 
 app.get("/notes", (req, res) => {
     res.sendFile(path.join(__dirname, '/public/notes.html'))
 });
 
 app.route('/api/notes')
-.get((req, res) => showTasks(res))
-.post((req, res) =>  saveTask(req.body, res));
+.get((req, res) => {
+    taskDisplay(res)
+})
+.post((req, res) => {
+    saveTask(req.body, res)
+});
 
 app.delete('/api/notes/:id', (req, res) => {
     removeTask(req.params.id, res)
 });
-
-app.get('/*/', (req, res) => {
-    res.redirect('/index.html')
-})
 
 //listen to the port
 app.listen(PORT, () => {
